@@ -1,0 +1,6 @@
+{
+  "name": "AfiliadoBot",
+  "description": "Plataforma multi-tenant para outreach automatizado por WhatsApp con Baileys, Neon PostgreSQL y React.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
