@@ -31,9 +31,9 @@ export default function Leads() {
       <div className="flex justify-between items-center">
         <h1 className="text-xl font-bold text-gray-900 tracking-tight">Mis Leads</h1>
         <div className="flex space-x-2">
-          <button className="bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center text-xs font-bold hover:bg-emerald-700 shadow-md shadow-emerald-900/10 transition-all">
+          <Link to="/leads/new" className="bg-emerald-600 text-white px-4 py-2 rounded-lg flex items-center text-xs font-bold hover:bg-emerald-700 shadow-md shadow-emerald-900/10 transition-all">
             <Plus className="w-4 h-4 mr-2" /> Agregar Lead
-          </button>
+          </Link>
         </div>
       </div>
 
