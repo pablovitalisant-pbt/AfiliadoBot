@@ -49,7 +49,15 @@ router.post('/stop', requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.get('/status', requireAuth, async (req: AuthRequest, res) => {
-  const [config] = await sql`SELECT * FROM bot_config WHERE user_id = ${req.userId}`;
+  let [config] = await sql`SELECT * FROM bot_config WHERE user_id = ${req.userId}`;
+  if (!config) {
+    [config] = await sql`
+      INSERT INTO bot_config (user_id) VALUES (${req.userId})
+      ON CONFLICT (user_id) DO NOTHING
+      RETURNING *
+    `;
+    if (!config) [config] = await sql`SELECT * FROM bot_config WHERE user_id = ${req.userId}`;
+  }
   
   const now = DateTime.now().setZone('America/Santiago');
   const todayStart = now.startOf('day').toJSDate();

@@ -23,7 +23,7 @@ export default function Dashboard() {
         setStats({
           totalLeads: leads.length || 0,
           sentToday: bot.dailyCount || 0,
-          pendingFollowups: Array.isArray(leads) ? leads.filter((l: any) => l.estado === 'dm' && l.f3 && !l.f3.dm1_respondio).length : 0,
+          pendingFollowups: Array.isArray(leads) ? leads.filter((l: any) => l.estado === 'frio' && l.f3 && !l.f3.dm1_enviado).length : 0,
           connected: wa.connected || false
         });
       } catch (err) {
