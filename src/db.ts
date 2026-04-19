@@ -82,4 +82,29 @@ export async function initDb() {
       END IF;
     END $$;
   `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS contacts (
+      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+      jid TEXT NOT NULL,
+      name TEXT,
+      notify TEXT,
+      verified_name TEXT,
+      phone TEXT,
+      synced_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (user_id, jid)
+    );
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS whatsapp_groups (
+      user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+      jid TEXT NOT NULL,
+      subject TEXT,
+      participants JSONB DEFAULT '[]'::jsonb,
+      participants_count INTEGER GENERATED ALWAYS AS (jsonb_array_length(participants)) STORED,
+      synced_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (user_id, jid)
+    );
+  `;
 }
