@@ -18,50 +18,75 @@ router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const normalized = normalizeWhatsAppNumber(url ?? '');
   if (!normalized.ok) return res.status(400).json({ error: normalized.error });
 
-  const [lead] = await sql`
-    INSERT INTO leads (user_id, nombre, url, pais, notas)
-    VALUES (${req.userId}, ${nombre}, ${normalized.url}, ${pais || 'Otro'}, ${notas})
-    RETURNING *
-  `;
-  res.json(lead);
+  try {
+    const [lead] = await sql`
+      INSERT INTO leads (user_id, nombre, url, pais, notas)
+      VALUES (${req.userId}, ${nombre}, ${normalized.url}, ${pais || 'Otro'}, ${notas})
+      RETURNING *
+    `;
+    res.json(lead);
+  } catch (err: any) {
+    if (err?.code === '23505') {
+      return res.status(409).json({
+        error: 'duplicate',
+        message: 'Este número de WhatsApp ya existe en tus leads'
+      });
+    }
+    throw err;
+  }
 });
 
 router.post('/bulk', requireAuth, async (req: AuthRequest, res) => {
   const leads = req.body; // Array of { nombre, telefono, wa_url }
   if (!Array.isArray(leads)) return res.status(400).json({ error: 'Invalid data' });
 
+  let duplicates = 0;
   for (const l of leads) {
-    // Check duplicate by url
-    const [exists] = await sql`SELECT id FROM leads WHERE user_id = ${req.userId} AND url = ${l.wa_url || l.url}`;
-    if (!exists) {
+    try {
       await sql`
-        INSERT INTO leads (user_id, nombre, url) 
+        INSERT INTO leads (user_id, nombre, url)
         VALUES (${req.userId}, ${l.nombre}, ${l.wa_url || l.url})
       `;
+    } catch (err: any) {
+      if (err?.code === '23505') {
+        duplicates++;
+      } else {
+        throw err;
+      }
     }
   }
-  res.json({ success: true });
+  res.json({ success: true, duplicates });
 });
 
 router.put('/:id', requireAuth, async (req: AuthRequest, res) => {
   const { id } = req.params;
   const { nombre, url, pais, notas, estado, f3, f4, f5 } = req.body;
   
-  const [updated] = await sql`
-    UPDATE leads SET 
-      nombre = ${nombre}, 
-      url = ${url}, 
-      pais = ${pais}, 
-      notas = ${notas}, 
-      estado = ${estado}, 
-      f3 = ${JSON.stringify(f3)}, 
-      f4 = ${JSON.stringify(f4)}, 
-      f5 = ${JSON.stringify(f5)}, 
-      updated_at = NOW()
-    WHERE id = ${id} AND user_id = ${req.userId}
-    RETURNING *
-  `;
-  res.json(updated);
+  try {
+    const [updated] = await sql`
+      UPDATE leads SET
+        nombre = ${nombre},
+        url = ${url},
+        pais = ${pais},
+        notas = ${notas},
+        estado = ${estado},
+        f3 = ${JSON.stringify(f3)},
+        f4 = ${JSON.stringify(f4)},
+        f5 = ${JSON.stringify(f5)},
+        updated_at = NOW()
+      WHERE id = ${id} AND user_id = ${req.userId}
+      RETURNING *
+    `;
+    res.json(updated);
+  } catch (err: any) {
+    if (err?.code === '23505') {
+      return res.status(409).json({
+        error: 'duplicate',
+        message: 'Este número de WhatsApp ya existe en tus leads'
+      });
+    }
+    throw err;
+  }
 });
 
 router.delete('/:id', requireAuth, async (req: AuthRequest, res) => {

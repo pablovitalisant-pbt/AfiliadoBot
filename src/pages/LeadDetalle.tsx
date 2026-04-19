@@ -40,7 +40,14 @@ export default function LeadDetalle() {
         notas: lead.notas || '',
       }),
     });
-    if (res.ok) { navigate('/leads'); }
+    if (res.ok) {
+      navigate('/leads');
+    } else if (res.status === 409) {
+      const data = await res.json();
+      alert(data.message || 'Este número ya existe en tus leads');
+    } else {
+      alert('Error al guardar el lead');
+    }
   };
 
   if (loading) return <div>Cargando...</div>;

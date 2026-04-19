@@ -45,4 +45,15 @@ describe('normalizeWhatsAppNumber', () => {
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toMatch(/demasiados/);
   });
+
+  it('produce el mismo output para diferentes formatos del mismo número', () => {
+    const a = normalizeWhatsAppNumber('56920948874');
+    const b = normalizeWhatsAppNumber('+56 9 2094 8874');
+    const c = normalizeWhatsAppNumber('(56) 9-2094-8874');
+    expect(a.ok && b.ok && c.ok).toBe(true);
+    if (a.ok && b.ok && c.ok) {
+      expect(a.url).toBe(b.url);
+      expect(b.url).toBe(c.url);
+    }
+  });
 });

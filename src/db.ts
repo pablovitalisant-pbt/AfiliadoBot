@@ -71,4 +71,15 @@ export async function initDb() {
       sent_at TIMESTAMPTZ DEFAULT NOW()
     );
   `;
+
+  await sql`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'leads_user_url_unique'
+      ) THEN
+        ALTER TABLE leads ADD CONSTRAINT leads_user_url_unique UNIQUE (user_id, url);
+      END IF;
+    END $$;
+  `;
 }
