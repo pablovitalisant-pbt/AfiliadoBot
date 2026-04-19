@@ -30,8 +30,14 @@ router.get('/qr', (req, res) => {
 
     const send = (data: any) => res.write(`data: ${JSON.stringify(data)}\n\n`);
 
-    // Initial status
-    send(waManager.getStatus(userId));
+    // Initial status — normalize to {type, data} contract
+    const initial = waManager.getStatus(userId);
+    if (initial.connected) {
+      send({ type: 'status', data: 'connected' });
+    } else if (initial.qr) {
+      send({ type: 'qr', data: initial.qr });
+    }
+    // else: no qr yet, wait for Baileys event
 
     // Listen for updates
     const listener = (update: any) => {
