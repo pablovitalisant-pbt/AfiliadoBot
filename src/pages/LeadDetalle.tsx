@@ -100,6 +100,15 @@ export default function LeadDetalle() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm('¿Eliminar este lead?')) return;
+    const res = await fetch(`/api/leads/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) navigate('/leads');
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -110,7 +119,7 @@ export default function LeadDetalle() {
           <button onClick={handleUpdate} className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center text-sm font-medium hover:bg-indigo-700 shadow-sm transition-all focus:ring-2 focus:ring-indigo-500">
             <Save className="w-4 h-4 mr-2" /> Guardar Cambios
           </button>
-          <button className="bg-red-50 text-red-600 px-4 py-2 rounded-lg flex items-center text-sm font-medium hover:bg-red-100 shadow-sm transition-all">
+          <button onClick={handleDelete} className="bg-red-50 text-red-600 px-4 py-2 rounded-lg flex items-center text-sm font-medium hover:bg-red-100 shadow-sm transition-all">
             <Trash2 className="w-4 h-4 mr-2" /> Eliminar
           </button>
         </div>
