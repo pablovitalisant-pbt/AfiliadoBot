@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { normalizeWhatsAppNumber } from '../lib/whatsapp-utils';
 import { ChevronLeft, Save, Trash2, Smartphone, User, Globe, FileText, CheckCircle2 } from 'lucide-react';
 
 export default function LeadDetalle() {
@@ -27,13 +28,14 @@ export default function LeadDetalle() {
   }, [id, token]);
 
   const handleCreate = async () => {
-    if (!lead?.url) return alert('La URL de WhatsApp es obligatoria');
+    const normalized = normalizeWhatsAppNumber(lead?.url ?? '');
+    if (!normalized.ok) return alert(normalized.error);
     const res = await fetch('/api/leads', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         nombre: lead.nombre || null,
-        url: lead.url,
+        url: normalized.url,
         pais: lead.pais || 'Otro',
         notas: lead.notas || '',
       }),
@@ -59,10 +61,11 @@ export default function LeadDetalle() {
             className="w-full border border-gray-200 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 text-sm" />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">URL WhatsApp *</label>
-          <input type="text" placeholder="https://wa.me/56912345678"
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Número de WhatsApp *</label>
+          <input type="text" placeholder="56912345678 o +56 9 1234 5678"
             onChange={(e) => setLead((p: any) => ({ ...p, url: e.target.value }))}
             className="w-full border border-gray-200 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 text-sm" />
+          <p className="text-[10px] text-gray-400 mt-1">Con código de país. El + y espacios son opcionales.</p>
         </div>
         <div>
           <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">País</label>

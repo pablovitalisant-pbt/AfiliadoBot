@@ -1,6 +1,7 @@
 import express from 'express';
 import { sql } from '../db';
 import { AuthRequest, requireAuth } from '../auth';
+import { normalizeWhatsAppNumber } from '../lib/whatsapp-utils';
 
 const router = express.Router();
 
@@ -13,9 +14,13 @@ router.get('/', requireAuth, async (req: AuthRequest, res) => {
 
 router.post('/', requireAuth, async (req: AuthRequest, res) => {
   const { nombre, url, pais, notas } = req.body;
+
+  const normalized = normalizeWhatsAppNumber(url ?? '');
+  if (!normalized.ok) return res.status(400).json({ error: normalized.error });
+
   const [lead] = await sql`
-    INSERT INTO leads (user_id, nombre, url, pais, notas) 
-    VALUES (${req.userId}, ${nombre}, ${url}, ${pais || 'Otro'}, ${notas}) 
+    INSERT INTO leads (user_id, nombre, url, pais, notas)
+    VALUES (${req.userId}, ${nombre}, ${normalized.url}, ${pais || 'Otro'}, ${notas})
     RETURNING *
   `;
   res.json(lead);
