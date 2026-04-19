@@ -27,6 +27,9 @@ router.post('/config', requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.post('/start', requireAuth, async (req: AuthRequest, res) => {
+  await waManager.restoreSocket(req.userId!);
+  // wait a moment for connection
+  await new Promise(r => setTimeout(r, 2000));
   const scheduler = waManager.getScheduler(req.userId!);
   if (scheduler) {
     await scheduler.start();

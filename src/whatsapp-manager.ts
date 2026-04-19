@@ -101,6 +101,11 @@ class WhatsAppManager {
     }
   }
 
+  async restoreSocket(userId: string) {
+    if (this.sockets.has(userId)) return;
+    await this.getOrCreateSocket(userId);
+  }
+
   getStatus(userId: string) {
     const connected = !!(this.sockets.has(userId) && this.sockets.get(userId)?.user);
     return {
