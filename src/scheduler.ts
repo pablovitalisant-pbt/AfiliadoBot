@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
 import { sql } from './db';
 import { waManager } from './whatsapp-manager';
+import { eventBus } from './lib/event-bus';
 
 const DM_INTERVALS = [0, 3, 7, 12, 21];
 
@@ -156,10 +157,11 @@ export class UserScheduler {
 
         // Log
         await sql`
-          INSERT INTO send_log (user_id, lead_id, dm, mensaje_variant, estado) 
+          INSERT INTO send_log (user_id, lead_id, dm, mensaje_variant, estado)
           VALUES (${this.userId}, ${lead.id}, ${dmNumber}, ${variant.variant}, 'enviado')
         `;
 
+        eventBus.emit(this.userId, { type: 'message_sent' });
         console.log(`Message sent to ${jid} for user ${this.userId}`);
       } catch (err) {
         console.error(`Failed to send message to ${jid}:`, err);

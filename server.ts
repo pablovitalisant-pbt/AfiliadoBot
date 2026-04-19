@@ -8,6 +8,7 @@ import messageRoutes from './src/routes/messages';
 import botRoutes from './src/routes/bot';
 import whatsappRoutes from './src/routes/whatsapp';
 import logRoutes from './src/routes/logs';
+import dashboardRoutes from './src/routes/dashboard';
 
 async function startServer() {
   const app = express();
@@ -31,6 +32,7 @@ async function startServer() {
   app.use('/api/bot', botRoutes);
   app.use('/api/whatsapp', whatsappRoutes);
   app.use('/api/logs', logRoutes);
+  app.use('/api/dashboard', dashboardRoutes);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== 'production') {

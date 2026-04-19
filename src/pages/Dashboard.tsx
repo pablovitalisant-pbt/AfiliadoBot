@@ -1,37 +1,52 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Users, TrendingUp, MessageCircle, Clock, AlertCircle } from 'lucide-react';
 
 export default function Dashboard() {
   const { token } = useAuth();
-  const [stats, setStats] = useState<any>({ totalLeads: 0, sentToday: 0, pendingFollowups: 0, connected: false });
+  const [stats, setStats] = useState<any>({ totalLeads: 0, sentToday: 0, maxDaily: 20, pendingFollowups: 0, connected: false });
+
+  const fetchData = useCallback(async () => {
+    try {
+      const [botRes, leadsRes, waRes] = await Promise.all([
+        fetch('/api/bot/status', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/leads', { headers: { Authorization: `Bearer ${token}` } }),
+        fetch('/api/whatsapp/status', { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      const bot = await botRes.json();
+      const leads = await leadsRes.json();
+      const wa = await waRes.json();
+      setStats({
+        totalLeads: leads.length || 0,
+        sentToday: bot.dailyCount || 0,
+        maxDaily: bot.maxDaily ?? 20,
+        pendingFollowups: Array.isArray(leads) ? leads.filter((l: any) => l.estado === 'frio' && l.f3 && !l.f3.dm1_enviado).length : 0,
+        connected: wa.connected || false,
+      });
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
+    }
+  }, [token]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [botRes, leadsRes, waRes] = await Promise.all([
-          fetch('/api/bot/status', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/leads', { headers: { Authorization: `Bearer ${token}` } }),
-          fetch('/api/whatsapp/status', { headers: { Authorization: `Bearer ${token}` } }),
-        ]);
+    if (token) fetchData();
+  }, [token, fetchData]);
 
-        const bot = await botRes.json();
-        const leads = await leadsRes.json();
-        const wa = await waRes.json();
-
-        setStats({
-          totalLeads: leads.length || 0,
-          sentToday: bot.dailyCount || 0,
-          pendingFollowups: Array.isArray(leads) ? leads.filter((l: any) => l.estado === 'frio' && l.f3 && !l.f3.dm1_enviado).length : 0,
-          connected: wa.connected || false
-        });
-      } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
+  useEffect(() => {
+    if (!token) return;
+    const es = new EventSource(`/api/dashboard/stream?token=${token}`);
+    es.onmessage = (e) => {
+      const event = JSON.parse(e.data);
+      if (event.type === 'snapshot') {
+        setStats(event.data);
+      } else if (event.type === 'message_sent') {
+        fetchData();
       }
     };
-    if (token) fetchData();
-  }, [token]);
+    es.onerror = (err) => { console.error('Dashboard SSE error:', err); es.close(); };
+    return () => es.close();
+  }, [token, fetchData]);
 
   const cards = [
     { title: 'Leads Totales', value: stats.totalLeads, icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
