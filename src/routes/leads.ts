@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.get('/', requireAuth, async (req: AuthRequest, res) => {
   const leads = await sql`
-    SELECT * FROM leads WHERE user_id = ${req.userId} ORDER BY created_at DESC
+    SELECT * FROM leads WHERE user_id = ${req.userId} ORDER BY updated_at DESC
   `;
   res.json(leads);
 });
