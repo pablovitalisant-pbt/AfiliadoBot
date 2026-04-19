@@ -8,6 +8,7 @@ export class UserScheduler {
   userId: string;
   running: boolean = false;
   private intervalId: NodeJS.Timeout | null = null;
+  private sending: boolean = false;
 
   constructor(userId: string) {
     this.userId = userId;
@@ -33,6 +34,8 @@ export class UserScheduler {
   }
 
   async tick() {
+    if (this.sending) return;
+    this.sending = true;
     try {
       // 1. Load config
       const [config] = await sql`SELECT * FROM bot_config WHERE user_id = ${this.userId}`;
@@ -106,6 +109,7 @@ export class UserScheduler {
 
     } catch (error) {
       console.error(`Scheduler error for user ${this.userId}:`, error);
+      this.sending = false;
     }
   }
 
@@ -160,6 +164,7 @@ export class UserScheduler {
       } catch (err) {
         console.error(`Failed to send message to ${jid}:`, err);
       }
+      this.sending = false;
     }, delay);
   }
 }
