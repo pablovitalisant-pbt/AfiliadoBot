@@ -1,4 +1,5 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import { waManager } from '../whatsapp-manager';
 import { AuthRequest, requireAuth } from '../auth';
 
@@ -19,7 +20,6 @@ router.get('/qr', (req, res) => {
   if (!token) return res.status(401).end();
 
   try {
-    const jwt = require('jsonwebtoken');
     const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
     const userId = decoded.userId;
