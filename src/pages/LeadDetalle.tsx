@@ -11,6 +11,7 @@ export default function LeadDetalle() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (id === 'new') { setLoading(false); return; }
     const fetchLead = async () => {
       const res = await fetch('/api/leads', {
         headers: { Authorization: `Bearer ${token}` }
@@ -18,12 +19,72 @@ export default function LeadDetalle() {
       if (res.ok) {
         const data = await res.json();
         const found = data.find((l: any) => l.id.toString() === id);
-        setLead(found);
+        setLead(found || null);
       }
       setLoading(false);
     };
     fetchLead();
   }, [id, token]);
+
+  const handleCreate = async () => {
+    if (!lead?.url) return alert('La URL de WhatsApp es obligatoria');
+    const res = await fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        nombre: lead.nombre || null,
+        url: lead.url,
+        pais: lead.pais || 'Otro',
+        notas: lead.notas || '',
+      }),
+    });
+    if (res.ok) { navigate('/leads'); }
+  };
+
+  if (loading) return <div>Cargando...</div>;
+
+  if (id === 'new') return (
+    <div className="space-y-6 max-w-lg">
+      <div className="flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="flex items-center text-gray-600 hover:text-emerald-600 transition-colors">
+          <ChevronLeft className="w-5 h-5 mr-1" /> Volver
+        </button>
+        <h1 className="text-xl font-bold text-gray-900">Nuevo Lead</h1>
+      </div>
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Nombre (opcional)</label>
+          <input type="text" placeholder="Nombre del prospecto"
+            onChange={(e) => setLead((p: any) => ({ ...p, nombre: e.target.value }))}
+            className="w-full border border-gray-200 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 text-sm" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">URL WhatsApp *</label>
+          <input type="text" placeholder="https://wa.me/56912345678"
+            onChange={(e) => setLead((p: any) => ({ ...p, url: e.target.value }))}
+            className="w-full border border-gray-200 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 text-sm" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">País</label>
+          <input type="text" placeholder="Otro"
+            onChange={(e) => setLead((p: any) => ({ ...p, pais: e.target.value }))}
+            className="w-full border border-gray-200 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 text-sm" />
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Notas</label>
+          <textarea rows={3} placeholder="Observaciones..."
+            onChange={(e) => setLead((p: any) => ({ ...p, notas: e.target.value }))}
+            className="w-full border border-gray-200 rounded-lg p-2 focus:ring-2 focus:ring-emerald-500 text-sm" />
+        </div>
+        <button onClick={handleCreate}
+          className="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold text-sm hover:bg-emerald-700 transition-colors">
+          Guardar Lead
+        </button>
+      </div>
+    </div>
+  );
+
+  if (!lead) return <div>Lead no encontrado</div>;
 
   const handleUpdate = async () => {
     const res = await fetch(`/api/leads/${id}`, {
@@ -38,9 +99,6 @@ export default function LeadDetalle() {
       alert('Lead actualizado correctamente');
     }
   };
-
-  if (loading) return <div>Cargando...</div>;
-  if (!lead) return <div>Lead no encontrado</div>;
 
   return (
     <div className="space-y-6">
