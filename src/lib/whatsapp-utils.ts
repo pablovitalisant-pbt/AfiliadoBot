@@ -19,3 +19,30 @@ export function normalizeWhatsAppNumber(input: string): NormalizeResult {
 
   return { ok: true, url: `https://wa.me/${digits}` };
 }
+
+export function resolveLidJid(
+  jid: string,
+  contactsMap: Map<string, any>
+): string | null {
+  if (!jid) return null;
+
+  // JID ya es real (@s.whatsapp.net) → retornar tal cual
+  if (jid.endsWith('@s.whatsapp.net')) return jid;
+
+  // JIDs de grupo no son contactos individuales
+  if (jid.endsWith('@g.us')) return null;
+
+  // JIDs @lid → buscar contacto con lid matching y id @s.whatsapp.net
+  if (jid.endsWith('@lid')) {
+    for (const contact of contactsMap.values()) {
+      const match = (contact?.lid === jid || contact?.id === jid);
+      if (match && typeof contact?.id === 'string' && contact.id.endsWith('@s.whatsapp.net')) {
+        return contact.id;
+      }
+    }
+    return null;
+  }
+
+  // Cualquier otro formato → null
+  return null;
+}

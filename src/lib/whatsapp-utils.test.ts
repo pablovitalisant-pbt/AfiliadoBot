@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeWhatsAppNumber } from './whatsapp-utils';
+import { normalizeWhatsAppNumber, resolveLidJid } from './whatsapp-utils';
 
 describe('normalizeWhatsAppNumber', () => {
   it('acepta número de 11 dígitos sin formato', () => {
@@ -55,5 +55,43 @@ describe('normalizeWhatsAppNumber', () => {
       expect(a.url).toBe(b.url);
       expect(b.url).toBe(c.url);
     }
+  });
+});
+
+describe('resolveLidJid', () => {
+  it('retorna el jid tal cual si termina en @s.whatsapp.net', () => {
+    const r = resolveLidJid('56912345678@s.whatsapp.net', new Map());
+    expect(r).toBe('56912345678@s.whatsapp.net');
+  });
+
+  it('resuelve @lid cuando Map tiene contacto con lid matching e id válido', () => {
+    const contactsMap = new Map();
+    contactsMap.set('abc@lid', { lid: 'abc@lid', id: '56912345678@s.whatsapp.net' });
+    const r = resolveLidJid('abc@lid', contactsMap);
+    expect(r).toBe('56912345678@s.whatsapp.net');
+  });
+
+  it('retorna null si jid es @lid y Map no tiene match', () => {
+    const contactsMap = new Map();
+    contactsMap.set('other@lid', { lid: 'other@lid', id: '56911111111@s.whatsapp.net' });
+    const r = resolveLidJid('abc@lid', contactsMap);
+    expect(r).toBeNull();
+  });
+
+  it('retorna null para jid de grupo @g.us', () => {
+    const r = resolveLidJid('120363025246125678@g.us', new Map());
+    expect(r).toBeNull();
+  });
+
+  it('retorna null para input vacío', () => {
+    const r = resolveLidJid('', new Map());
+    expect(r).toBeNull();
+  });
+
+  it('retorna null si contacto matching tiene id que NO es @s.whatsapp.net', () => {
+    const contactsMap = new Map();
+    contactsMap.set('abc@lid', { lid: 'abc@lid', id: 'something@broadcast' });
+    const r = resolveLidJid('abc@lid', contactsMap);
+    expect(r).toBeNull();
   });
 });
